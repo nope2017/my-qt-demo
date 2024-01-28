@@ -6,7 +6,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
-
+#include <QMovie>
 #include "button.h"
 
 #define SHADOW_RD 10
@@ -20,7 +20,7 @@
 #define CONTENT_WND_WIDTH 600
 #define CONTENT_WND_HEIGHT 356
 
-#define CLOSE_BTN_THREE	"H:\\code\\1-qt\\my-qt-demo\\widget_demo\\pwd_btn_close.png"
+#define CLOSE_BTN_THREE	"D:\\test\\qt\\Project1\\MsgWnd\\pwd_btn_close.png"
 
 #define MAIN_WIDGET_STYLESHEET "QWidget#MainWnd{background:#026fbe;\
 								padding: 0px; margin: 0px;}"
@@ -85,6 +85,7 @@
 								border-style: solid; border-width: 1px; border-color: #D5D5D5;\
 								color:#999999;\
 							   border-radius: 3px;}"
+
 
 
 CSmsAuthWnd::CSmsAuthWnd(QWidget* parent):QWidget(parent)
@@ -243,7 +244,8 @@ void CSmsAuthWnd::initUI()
 		btCheck->setStyleSheet(QString(NORMAL_CHECK_BT_STYLE));
 		m_lbErrTips->setStyleSheet(ERR_TIP_STYLE);
 
-		m_lbErrTips->setText("get code clicked...");
+		//m_lbErrTips->setText("get code clicked...");
+		m_lbErrTips->setText("");
 		//this->resize(270, 356);
 		//CMyBaseWnd::repaint();
 	});
@@ -309,4 +311,81 @@ void CSmsAuthWnd::initUI()
 	vbSubLayout->addWidget(pContentWnd);
 	//主界面 添加到 底层透明界面
 	hbMainLayout->addWidget(m_MainWnd);
+}
+
+#define WAIT_WND_WIDTH 258
+#define WAIT_WND_HEIGHT 94
+//等待界面
+#define WAIT_WND_STYLESHEET "QWidget{background:#FFFFFF;padding: 0px;margin: 0px; \
+								border-width: 0px; border-radius: 3px;}"
+#define TEXT_STYLE "QLabel{font-family: AlibabaPuHuiTiR; font-size: 14px; color:#4A4A4A;}"
+#define GIF_PATH "D:\\test\\qt\\Project1\\MsgWnd\\wait_load.gif"
+
+CWaitWnd::CWaitWnd(QWidget* parent)
+{
+	initUI();
+}
+
+CWaitWnd::~CWaitWnd()
+{
+
+}
+
+void CWaitWnd::initUI()
+{
+	setObjectName("waitWnd");
+	setFixedSize(WAIT_WND_WIDTH + SHADOW_RD, WAIT_WND_HEIGHT + SHADOW_RD);
+	setWindowFlags(Qt::FramelessWindowHint |  Qt::WindowStaysOnTopHint);
+	setAttribute(Qt::WA_TranslucentBackground);
+	//setStyleSheet("QWidget#waitWnd{background:#FF00FF;}");
+
+	QWidget* mainWnd = new QWidget(this);
+	mainWnd->setFixedSize(WAIT_WND_WIDTH, WAIT_WND_HEIGHT);
+	mainWnd->setMaximumSize(WAIT_WND_WIDTH, WAIT_WND_HEIGHT);
+	mainWnd->setStyleSheet(WAIT_WND_STYLESHEET);
+
+	QGraphicsDropShadowEffect* shadowEffect = new QGraphicsDropShadowEffect();
+	shadowEffect->setColor(QColor(0, 0, 0, 30));
+	shadowEffect->setBlurRadius(10);
+	shadowEffect->setOffset(0, 0);
+	mainWnd->setGraphicsEffect(shadowEffect);
+
+	QHBoxLayout* hbLayout = new QHBoxLayout(mainWnd);
+	hbLayout->setMargin(0);
+	QVBoxLayout* vbLayout = new QVBoxLayout();
+	vbLayout->setMargin(0);
+	vbLayout->setSpacing(0);
+
+
+	QLabel* lbImg = new QLabel();
+	//lbImg->setStyleSheet("QLabel{background:#FF00FF;padding:0px;margin:0px}");
+	lbImg->setMaximumSize(30,40);
+	QHBoxLayout* hbImgLayout = new QHBoxLayout(mainWnd);
+	hbImgLayout->setSpacing(0);
+	hbImgLayout->addSpacing(114-74);
+	hbImgLayout->addWidget(lbImg);
+	hbImgLayout->addStretch();
+	QMovie* pMv = new QMovie();
+	pMv->setFileName(GIF_PATH);
+	lbImg->setMovie(pMv);
+	lbImg->adjustSize();
+	pMv->start();
+
+	QLabel* lbText = new QLabel();
+	lbText->setStyleSheet(TEXT_STYLE);
+	lbText->setFixedHeight(20);
+	lbText->setText(QString::fromLocal8Bit("正在获取认证流程"));
+	
+	vbLayout->addSpacing(10);
+	vbLayout->addLayout(hbImgLayout);
+	vbLayout->addWidget(lbText, Qt::AlignCenter | Qt::AlignHCenter);
+	vbLayout->addStretch();
+
+	hbLayout->addSpacing(74);
+	hbLayout->addLayout(vbLayout);
+	hbLayout->addStretch();
+
+	QHBoxLayout* hbTopLayout = new QHBoxLayout(this);
+	hbTopLayout->setMargin(0);
+	hbTopLayout->addWidget(mainWnd);
 }

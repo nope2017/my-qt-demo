@@ -44,4 +44,17 @@ private:
 	bool m_bShowWindow;		//¥∞ø⁄“—œ‘ æ
 };
 
+class CWaitWnd :public QWidget
+{
+
+	Q_OBJECT
+
+public:
+	CWaitWnd(QWidget* parent = Q_NULLPTR);
+	~CWaitWnd();
+
+private:
+	void initUI();
+};
+
 #endif
