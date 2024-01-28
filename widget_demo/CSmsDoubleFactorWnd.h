@@ -6,6 +6,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QPoint>
+#include <QStackedWidget>
 #include <string>
 #include <functional>
 
@@ -19,19 +20,23 @@ class CMyBaseWnd :public QWidget
 	Q_OBJECT
 
 public:
-	CMyBaseWnd(QWidget* parent = Q_NULLPTR);
+	CMyBaseWnd(QWidget* contWnd = Q_NULLPTR,QWidget* parent = Q_NULLPTR);
 	~CMyBaseWnd();
 	void mousePressEvent(QMouseEvent* event)override;
 	void mouseReleaseEvent(QMouseEvent* event)override;
 	void mouseMoveEvent(QMouseEvent* event)override;
 	void closeEvent(QCloseEvent* event)override;
 	void showEvent(QShowEvent* event)override;
+	bool eventFilter(QObject *obj, QEvent *event)override;
+
 	void setWndSize(int nWidth, int nHeight);
 	void setTitleWndHeight(int nHeight);
 	void MoveCenter();
 	void setTitle(const std::string& strTitle);
 	void setClose(closeFunc close);
 	void initUI(QWidget* subWnd = nullptr);
+	void addContentWnd(QWidget* pWnd);
+	
 private:
 	void initUI0();
 
@@ -40,7 +45,8 @@ protected:
 	QWidget* m_TitleWnd;
 	QWidget* m_MainWnd;
 private:
-	QWidget* m_ContentWnd; //内容窗口控件
+	QStackedWidget* m_stackWidget;
+	QWidget* m_ContentWnd;			//内容窗口控件
 	QPushButton* m_btnClose;			//关闭按钮
 	QLabel* m_labelTitle;				//标题
 	closeFunc m_myClose;
@@ -60,7 +66,7 @@ class CSmsDoubleFactorWnd : public QWidget
 public:
 	CSmsDoubleFactorWnd(QWidget* parent = Q_NULLPTR);
 	~CSmsDoubleFactorWnd();
-	bool close();
+	//bool close();
 private:
 	void initUI2();
 

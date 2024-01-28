@@ -12,11 +12,20 @@
 #include <QGraphicsDropShadowEffect>
 #include <QBrush>
 #include <QStyle>
-
+#include <QStackedWidget>
 #include "button.h"
 
 #define SHADOW_RD 10
-#define CLOSE_BTN_THREE	"D:\\test\\qt\\Project1\\MsgWnd\\pwd_btn_close.png"
+//内边距
+#define MARGIN_LEN 2
+//主界面(不包括阴影)
+#define MAIN_WND_WIDTH 604
+#define MAIN_WND_HEIGHT 408
+//内容界面
+#define CONTENT_WND_WIDTH 600
+#define CONTENT_WND_HEIGHT 356
+
+#define CLOSE_BTN_THREE	"H:\\code\\1-qt\\my-qt-demo\\widget_demo\\pwd_btn_close.png"
 //026fbe
 
 #define NORMAL_BKG "QWidget{background:#026fbe;}"
@@ -26,15 +35,17 @@
 								}"
 								
 #define MAIN_WIDGET_STYLESHEET "QWidget#MainWnd{background:#026fbe;}"
+#define TITLE_WND_STYLESHEET "QWidget#TitleWnd{background:#ff0000;}"
+//#define TITLE_WND_STYLESHEET "QWidget#TitleWnd{background:#026fbe;}"
 
 #define CONTENT_WIDGET_STYLESHEET "QWidget{background:#FFFFFF;padding: 0px; \
 								border-radius: 3px;\
 								}"
-#define SMS_WIDGET_STYLESHEET "QWidget#mainSms{background:#FFFFFF; \
+#define SMS_WIDGET_STYLESHEET "QWidget#mainSms{background:#00FFFF; \
 								border-radius: 3px; padding: 0px;\
 								}"
 //透明顶层窗口
-#define TOP_WND_STYLE "QWidget{background:#026fbe;background-color: rgba(255, 255, 255, 50%); }"
+#define TOP_WND_STYLE "QWidget#MyBaseWnd{background:#026fbe;background-color: rgba(255, 255, 255, 50%); }"
 
 #define button_stylesheet	"\
 				QPushButton{\
@@ -82,12 +93,12 @@
 				}"
 
 #define TITLE_STYLE "QLabel#title_text{font-family: AlibabaPuHuiTiM; font-size: 16px; color:#ffffff;\
-					letter-spacing:0;border-width: 0px;}"
+					background:#ff00ff;border-width: 0px;}"
 
 #define PHONE_NUM_STYLE "QLabel#phone_text{color:#026fbe;\
 					font-size: 16px;\
 					font-family: AlibabaPuHuiTiM;\
-					letter-spacing:0;border-width: 0px;}"
+					border-width: 0px;}"
 #define NORMAL_TEXT_STYLE "QLabel{color:#999999;\
 					font-size: 14px;\
 					font-family: AlibabaPuHuiTiR;\
@@ -95,7 +106,7 @@
 #define ACTIVE_TEXT_STYLE "QLabel#active_text{color:#36A1EF;\
 					font-size: 14px;\
 					font-family: AlibabaPuHuiTiR;\
-					letter-spacing:0;border-width: 0px; padding: 0px;}"
+					border-width: 0px; padding: 0px;}"
 #define ERR_TIP_STYLE "QLabel#err_tip{color:#FD393A;\
 					font-size: 12px; line-height: 18px;\
 					font-family: AlibabaPuHuiTiR;}"
@@ -115,8 +126,8 @@
 								color:#999999;\
 							   border-radius: 3px;}"
 
-CMyBaseWnd::CMyBaseWnd(QWidget* parent):QWidget(parent), m_nWidth(604), m_nHeight(408), m_labelTitle(nullptr),
-m_myClose(nullptr)
+CMyBaseWnd::CMyBaseWnd(QWidget* contWnd,QWidget* parent):QWidget(parent), m_stackWidget(nullptr), m_ContentWnd(contWnd),
+m_TitleWnd(nullptr),m_nWidth(MAIN_WND_WIDTH), m_nHeight(MAIN_WND_HEIGHT), m_labelTitle(nullptr),m_myClose(nullptr)
 {
 	setTitleWndHeight(50);
 	initUI0();
@@ -130,7 +141,7 @@ void CMyBaseWnd::mousePressEvent(QMouseEvent* event)
 	m_WindowPos = this->pos();
 	m_mousePos = event->globalPos();
 	m_DestPos = m_mousePos - m_WindowPos;
-	m_bMove = m_mousePos.y() - m_WindowPos.y() < (28+ SHADOW_RD) ? true : false;
+	m_bMove = m_mousePos.y() - m_WindowPos.y() < (28) ? true : false;
 	qDebug() << "windows pos:" << m_WindowPos << "  mouse pos:" << m_mousePos << "\n";
 }
 void CMyBaseWnd::mouseReleaseEvent(QMouseEvent* event)
@@ -141,6 +152,7 @@ void CMyBaseWnd::mouseMoveEvent(QMouseEvent* event)
 {
 	if (m_bMove)
 	{
+		//qDebug() << "global pos:" << event->globalPos()<<",dest pos:"<< m_DestPos<<"\n";
 		this->move(event->globalPos() - m_DestPos);
 	}
 }
@@ -148,11 +160,26 @@ void CMyBaseWnd::closeEvent(QCloseEvent* event)
 {
 	event->accept();
 	m_bShowWindow = false;
+	//QApplication::destroyed();
 }
 void CMyBaseWnd::showEvent(QShowEvent* event)
 {
+	this->adjustSize();
 	event->accept();
 	m_bShowWindow = true;
+}
+
+bool CMyBaseWnd::eventFilter(QObject *obj, QEvent *event)
+{
+	if ( event->type() == QEvent::MouseButtonPress)
+	{
+		qDebug() << "Mouse Press Event on PushButton";
+	}
+
+	// 其他事件过滤逻辑
+
+	// 调用父类的事件过滤器
+	return QObject::eventFilter(obj, event);
 }
 
 void CMyBaseWnd::setClose(closeFunc cFunc)
@@ -179,18 +206,24 @@ void CMyBaseWnd::setTitle(const std::string& strTitle)
 	m_labelTitle->setStyleSheet(TITLE_STYLE);
 	
 }
+void CMyBaseWnd::addContentWnd(QWidget* pWnd)
+{
+	m_ContentWnd = pWnd;
+}
+
 void CMyBaseWnd::initUI0()
 {
+	setObjectName("MyBaseWnd");
 	setFixedSize(m_nWidth+ SHADOW_RD, m_nHeight+ SHADOW_RD);
 	//setWindowOpacity(0);
-	setStyleSheet(TOP_WND_STYLE);
+	//setStyleSheet(TOP_WND_STYLE);
 	setWindowFlags(Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint);
-	setAttribute(Qt::WA_TranslucentBackground);
+	//setAttribute(Qt::WA_TranslucentBackground);
 	//主窗体
 	m_MainWnd = new QWidget(this);
 	m_MainWnd->setObjectName("MainWnd");
 	m_MainWnd->setStyleSheet(MAIN_WIDGET_STYLESHEET);
-	m_MainWnd->setFixedSize(m_nWidth, m_nHeight);
+	m_MainWnd->setMaximumSize(m_nWidth, m_nHeight);
 
 	//阴影
 	QGraphicsDropShadowEffect* shadowEffect = new QGraphicsDropShadowEffect();
@@ -199,43 +232,85 @@ void CMyBaseWnd::initUI0()
 	shadowEffect->setOffset(0, 0);
 	m_MainWnd->setGraphicsEffect(shadowEffect);
 
-	m_TitleWnd = new QWidget();
+	//标题界面
+	if (m_TitleWnd == nullptr)
+	{
+		m_TitleWnd = new QWidget(m_MainWnd);
+	}
 	m_TitleWnd->setObjectName("TitleWnd");
 	m_TitleWnd->setFixedHeight(nTitleWndHeight);
-	m_TitleWnd->setStyleSheet(NORMAL_BKG);
+	m_TitleWnd->setStyleSheet(TITLE_WND_STYLESHEET);
 	QHBoxLayout* hbTitleLayout = new QHBoxLayout(m_TitleWnd);
 	setTitle("入网身份认证");
 	m_btnClose = new Button(CLOSE_BTN_THREE, 3, this);
-	m_btnClose->setStyleSheet("backgrouond: transparent");
-	connect(m_btnClose, &Button::clicked, [this] {close(); });
+	m_btnClose->setStyleSheet("background: transparent");
+	connect(m_btnClose, &Button::clicked, [this] {this->close(); });
 
 	hbTitleLayout->addSpacing(248);
 	hbTitleLayout->addWidget(m_labelTitle,Qt::AlignHCenter);
 	hbTitleLayout->addStretch();
 	hbTitleLayout->addWidget(m_btnClose, Qt::AlignRight);
 	hbTitleLayout->addSpacing(2);
+
+	//
+	//QHBoxLayout* hbMainLayout = new QHBoxLayout(this);
+	//QVBoxLayout* vbSubLayout = new QVBoxLayout(m_MainWnd);
+	////m_TitleWnd->setMaximumHeight(nTitleWndHeight);
+	////vbSubLayout->setContentsMargins(2, 2, 2, 2);
+	//vbSubLayout->setMargin(12);
+	//vbSubLayout->addWidget(m_TitleWnd);
+	//vbSubLayout->setSpacing(0);
+	//m_stackWidget = new QStackedWidget(m_MainWnd);
+	//m_stackWidget->setMaximumSize(CONTENT_WND_WIDTH, CONTENT_WND_HEIGHT);
+	//vbSubLayout->addWidget(m_stackWidget);
+	//if (m_ContentWnd != nullptr)
+	//{
+	//	m_stackWidget->addWidget(m_ContentWnd);
+	//	m_stackWidget->setCurrentWidget(m_ContentWnd);
+	//	/*m_ContentWnd->setParent(m_MainWnd);
+	//	m_ContentWnd->setMaximumSize(CONTENT_WND_WIDTH , CONTENT_WND_HEIGHT );
+	//	vbSubLayout->addWidget(m_ContentWnd);*/
+	//}
+	//else
+	//{
+	//	QWidget* subWnd = new QWidget();
+	//	subWnd->setStyleSheet(CONTENT_WIDGET_STYLESHEET);
+	//	subWnd->setParent(this);
+	//	//subWnd->setFixedSize(m_nWidth, m_nHeight- nTitleWndHeight);
+	//	vbSubLayout->addWidget(subWnd);
+	//}
+	////m_MainWnd->setLayout(vbSubLayout);
+	//hbMainLayout->addWidget(m_MainWnd);
 }
 
 void CMyBaseWnd::initUI(QWidget* subWnd)
 {
-	
 	QHBoxLayout* hbMainLayout = new QHBoxLayout(this);
-	//hbMainLayout->setContentsMargins(2, 2, 2, 2);
-
-	QVBoxLayout* vbSubLayout = new QVBoxLayout();
-	m_TitleWnd->setMaximumHeight(nTitleWndHeight);
-	vbSubLayout->setContentsMargins(2, 2, 2, 2);
+	hbMainLayout->setMargin(MARGIN_LEN);
+	//m_MainWnd->setContentsMargins(2, 2, 2, 2);
+	QVBoxLayout* vbSubLayout = new QVBoxLayout(m_MainWnd);
+	//vbSubLayout->setMargin(1);
+	//vbSubLayout->setContentsMargins(2, 2, 2, 2);
 	vbSubLayout->addWidget(m_TitleWnd);
 	vbSubLayout->setSpacing(0);
 	if (subWnd != nullptr)
 	{
+		subWnd->setParent(this);
+		subWnd->setMaximumSize(CONTENT_WND_WIDTH , CONTENT_WND_HEIGHT );
+		//subWnd->setFixedSize(CONTENT_WND_WIDTH, CONTENT_WND_HEIGHT);
 		vbSubLayout->addWidget(subWnd);
 	}
 	else
 	{
-		QWidget* subWnd = new QWidget();
+		QWidget* subWnd = new QWidget(this);
 		subWnd->setStyleSheet(CONTENT_WIDGET_STYLESHEET);
-		//subWnd->setFixedSize(m_nWidth, m_nHeight- nTitleWndHeight);
+		subWnd->setFixedSize(CONTENT_WND_WIDTH, CONTENT_WND_HEIGHT);
+		QHBoxLayout* hLayout = new QHBoxLayout(subWnd);
+		QLineEdit* pedit = new QLineEdit(subWnd);
+		pedit->setText("test...hello");
+		pedit->setFixedSize(100, 20);
+		hLayout->addWidget(pedit);
+
 		vbSubLayout->addWidget(subWnd);
 	}
 	m_MainWnd->setLayout(vbSubLayout);
@@ -277,15 +352,17 @@ CSmsDoubleFactorWnd::~CSmsDoubleFactorWnd()
 
 }
 
-bool CSmsDoubleFactorWnd::close()
-{
-	qDebug() << "CSmsDoubleFactorWnd close..." << "\n";
-	return QWidget::close();
-	//return CMyBaseWnd::close();
-}
+//bool CSmsDoubleFactorWnd::close()
+//{
+//	qDebug() << "CSmsDoubleFactorWnd close..." << "\n";
+//	return QWidget::close();
+//	//return CMyBaseWnd::close();
+//}
 
 void CSmsDoubleFactorWnd::initUI2()
 {
+	//setFixedSize();
+	setMaximumSize(CONTENT_WND_WIDTH, CONTENT_WND_HEIGHT);
 	setStyleSheet(CONTENT_WIDGET_STYLESHEET);
 	//sms
 	QWidget* pMainContent = new QWidget(this);
@@ -335,7 +412,9 @@ void CSmsDoubleFactorWnd::initUI2()
 		m_btGetCode->setStyleSheet(DISABLE_GET_CODE_BUTTON);
 		btCheck->setStyleSheet(QString(NORMAL_CHECK_BT_STYLE));
 		m_lbErrTips->setStyleSheet(ERR_TIP_STYLE);
-		this->resize(270, 356);
+		
+		m_lbErrTips->setText("get code clicked...");
+		//this->resize(270, 356);
 		//CMyBaseWnd::repaint();
 	});
 
@@ -355,7 +434,7 @@ void CSmsDoubleFactorWnd::initUI2()
 	connect(m_lbErrTips, &QLabel::hasFocus, this, [=]() {
 		qDebug() << "hasFocus:";
 		m_lbErrTips->setStyleSheet(QString(ERR_TIP_STYLE_2));
-		this->resize(270, 356);
+		//this->resize(270, 356);
 	});
 
 	//验证 按钮
@@ -367,6 +446,7 @@ void CSmsDoubleFactorWnd::initUI2()
 		m_lbErrTips->setStyleSheet(QString(ERR_TIP_STYLE_2));
 		btCheck->setStyleSheet(QString(DISABLE_CHECK_BT_STYLE));
 		m_btGetCode->setStyleSheet(GET_CODE_BUTTON);
+		m_lbErrTips->setText("btCheck clicked...");
 		//btCheck->style()->polish(btCheck);
 		this->repaint();
 	});
@@ -388,13 +468,14 @@ void CSmsDoubleFactorWnd::initUI2()
 	pMainContent->setLayout(vbSmsLayout);
 
 	QHBoxLayout* hbLayoutContent = new QHBoxLayout(this);
-	hbLayoutContent->setContentsMargins(0, 0, 0, 0);
-	//hbLayoutContent->addStretch();
+	hbLayoutContent->setMargin(0);
+	//
 	hbLayoutContent->addSpacing(170);
 	hbLayoutContent->addWidget(pMainContent, Qt::AlignCenter);
+	//hbLayoutContent->addStretch();
 	hbLayoutContent->addSpacing(170);
 
 	
-	this->setLayout(hbLayoutContent);
+	//this->setLayout(hbLayoutContent);
 	//this->hide();
 }
